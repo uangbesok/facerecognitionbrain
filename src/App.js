@@ -35,13 +35,39 @@ class App extends Component {
       box: {},
       route: "signIn",
       isSignedIn: false,
+      user : {
+            id: 0,
+            name: "",
+            email: "",
+            entries: 0,
+            joined: '',
+      }
     };
+  }
+
+  loadUser = data => {
+    this.setState({
+      user : {
+        id : Number(data.id),
+        name : data.name,
+        email: data.email,
+        entries : Number(data.entries),
+        joined : Date(data.joined),
+      }
+    })
+  }
+
+  componentDidMount() {
+    // fetch('http://localhost:3000/')
+    //   .then(response => response.json())
+    //   .then(console.log);
   }
 
   onInputChange = event => {
     this.setState({ input: event.target.value });
   };
 
+  // here we only access first recognized object but we have to process all of them
   calculateFaceLocation = data => {
     const clarifaiFace =
       data.outputs[0].data.regions[0].region_info.bounding_box;
@@ -69,7 +95,24 @@ class App extends Component {
         app.models
           .predict(Clarifai.FACE_DETECT_MODEL, this.state.imageURL)
           .then(response =>
-            this.saveFaceBox(this.calculateFaceLocation(response))
+            {
+              if(response)
+              {
+                fetch("http://localhost:3000/image", 
+                {
+                  method: 'put',
+                  headers: {'Content-Type' : 'application/json'},
+                  body: JSON.stringify(
+                    {
+                      id : this.state.user.id,
+                    }
+                  )
+                })
+                .then(response => response.json())
+                .then(count => this.setState(Object.assign(this.state.user, {entries : count})));
+                this.saveFaceBox(this.calculateFaceLocation(response));
+              }
+            }
           )
           .catch(err => console.log(err));
       }
@@ -77,10 +120,8 @@ class App extends Component {
   };
 
   onRouteChange = route => {
-    if(route === 'signIn')
-      this.setState({isSignedIn : false});
-    else if(route === 'home')
-      this.setState({isSignedIn : true});
+    if (route === "signIn") this.setState({ isSignedIn: false });
+    else if (route === "home") this.setState({ isSignedIn: true });
 
     this.setState({ route });
   };
@@ -89,13 +130,16 @@ class App extends Component {
     return (
       <div className="App">
         {/* <Particles className="particles" params={particleOptions} /> */}
-        <Navigation onRouteChange={this.onRouteChange} isSignedIn={this.state.isSignedIn}/>
+        <Navigation
+          onRouteChange={this.onRouteChange}
+          isSignedIn={this.state.isSignedIn}
+        />
         {this.state.route === "signIn" ? (
-          <SignInForm onRouteChange={this.onRouteChange} />
+          <SignInForm onRouteChange={this.onRouteChange} loadUser={this.loadUser}/>
         ) : this.state.route === "home" ? (
           <>
             <Logo />
-            <Rank />
+            <Rank name={this.state.user.name} entries={this.state.user.entries}/>
             <ImageLinkForm
               onInputChange={this.onInputChange}
               onSubmit={this.onSubmit}
@@ -106,7 +150,7 @@ class App extends Component {
             />
           </>
         ) : (
-          <RegisterForm onRouteChange={this.onRouteChange} />
+          <RegisterForm onRouteChange={this.onRouteChange} loadUser={this.loadUser}/>
         )}
       </div>
     );
