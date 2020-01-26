@@ -1,6 +1,5 @@
 import React, { Component } from "react";
 import "./App.css";
-import Clarifai from "clarifai";
 import Navigation from "./components/Navigation/Navigation";
 import SignInForm from "./components/SignInForm/SignInForm";
 import RegisterForm from "./components/RegisterForm/RegisterForm";
@@ -22,40 +21,39 @@ const particleOptions = {
   }
 };
 
-const app = new Clarifai.App({
-  apiKey: "1ca0d57f5fd642e5a84c6bb4e76ea9a8"
-});
+
+const initialState = {
+  input: "",
+  imageURL: "",
+  box: {},
+  route: "signIn",
+  isSignedIn: false,
+  user: {
+    id: 0,
+    name: "",
+    email: "",
+    entries: 0,
+    joined: ""
+  }
+}
 
 class App extends Component {
   constructor() {
     super();
-    this.state = {
-      input: "",
-      imageURL: "",
-      box: {},
-      route: "signIn",
-      isSignedIn: false,
-      user : {
-            id: 0,
-            name: "",
-            email: "",
-            entries: 0,
-            joined: '',
-      }
-    };
+    this.state = initialState;
   }
 
   loadUser = data => {
     this.setState({
-      user : {
-        id : Number(data.id),
-        name : data.name,
+      user: {
+        id: data.id,
+        name: data.name,
         email: data.email,
-        entries : Number(data.entries),
-        joined : Date(data.joined),
+        entries: data.entries,
+        joined: Date(data.joined)
       }
-    })
-  }
+    });
+  };
 
   componentDidMount() {
     // fetch('http://localhost:3000/')
@@ -73,9 +71,11 @@ class App extends Component {
       data.outputs[0].data.regions[0].region_info.bounding_box;
     // Here we use pure DOM jQuery manipulation for now but i change it to React approach
     // 'passing ref'???? later on!!!!
-    const image = document.getElementById("inputImage");
-    const width = Number(image.width);
-    const height = Number(image.height);
+    // const image = document.getElementById("inputImage");
+    // const width = Number(image.width);
+    // const height = Number(image.height);
+    const width = this.faceImage.width;
+    const height = this.faceImage.height;
     return {
       leftCol: clarifaiFace.left_col * width,
       topRow: clarifaiFace.top_row * height,
@@ -92,35 +92,39 @@ class App extends Component {
     this.setState(
       (state, props) => ({ imageURL: state.input }),
       () => {
-        app.models
-          .predict(Clarifai.FACE_DETECT_MODEL, this.state.imageURL)
-          .then(response =>
-            {
-              if(response)
-              {
-                fetch("http://localhost:3000/image", 
-                {
-                  method: 'put',
-                  headers: {'Content-Type' : 'application/json'},
-                  body: JSON.stringify(
-                    {
-                      id : this.state.user.id,
-                    }
-                  )
+          fetch("http://localhost:3000/predict", {
+            method: "post",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              input: this.state.imageURL
+            })
+          })
+          .then(response => response.json())
+          .then(response => {
+            if (response) {
+              fetch("http://localhost:3000/image", {
+                method: "put",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  id: this.state.user.id
                 })
+              })
                 .then(response => response.json())
-                .then(count => this.setState(Object.assign(this.state.user, {entries : count})));
-                this.saveFaceBox(this.calculateFaceLocation(response));
-              }
+                .then(count => {
+                  const user = { ...this.state.user, entries: count };
+                  this.setState({ user: user });
+                })
+                .catch(console.log);
+              this.saveFaceBox(this.calculateFaceLocation(response));
             }
-          )
+          })
           .catch(err => console.log(err));
       }
     );
   };
 
   onRouteChange = route => {
-    if (route === "signIn") this.setState({ isSignedIn: false });
+    if (route === "signIn") this.setState(initialState);
     else if (route === "home") this.setState({ isSignedIn: true });
 
     this.setState({ route });
@@ -135,11 +139,17 @@ class App extends Component {
           isSignedIn={this.state.isSignedIn}
         />
         {this.state.route === "signIn" ? (
-          <SignInForm onRouteChange={this.onRouteChange} loadUser={this.loadUser}/>
+          <SignInForm
+            onRouteChange={this.onRouteChange}
+            loadUser={this.loadUser}
+          />
         ) : this.state.route === "home" ? (
           <>
             <Logo />
-            <Rank name={this.state.user.name} entries={this.state.user.entries}/>
+            <Rank
+              name={this.state.user.name}
+              entries={this.state.user.entries}
+            />
             <ImageLinkForm
               onInputChange={this.onInputChange}
               onSubmit={this.onSubmit}
@@ -147,10 +157,14 @@ class App extends Component {
             <FaceRecognition
               imageURL={this.state.imageURL}
               box={this.state.box}
+              imageRef={element => this.faceImage = element}
             />
           </>
         ) : (
-          <RegisterForm onRouteChange={this.onRouteChange} loadUser={this.loadUser}/>
+          <RegisterForm
+            onRouteChange={this.onRouteChange}
+            loadUser={this.loadUser}
+          />
         )}
       </div>
     );
