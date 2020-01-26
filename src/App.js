@@ -92,7 +92,7 @@ class App extends Component {
     this.setState(
       (state, props) => ({ imageURL: state.input }),
       () => {
-          fetch("http://localhost:3000/predict", {
+          fetch("https://murmuring-cliffs-39707.herokuapp.com/predict", {
             method: "post",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -102,7 +102,7 @@ class App extends Component {
           .then(response => response.json())
           .then(response => {
             if (response) {
-              fetch("http://localhost:3000/image", {
+              fetch("https://murmuring-cliffs-39707.herokuapp.com/image", {
                 method: "put",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
