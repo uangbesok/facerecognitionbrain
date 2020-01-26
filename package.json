@@ -1,5 +1,6 @@
 {
   "name": "facerecognitionbrain",
+  "homepage": "https://uangbesok.github.io/facerecognitionbrain",
   "version": "0.1.0",
   "private": true,
   "dependencies": {
@@ -15,12 +16,12 @@
     "react-tilt": "^0.1.4"
   },
   "scripts": {
-    "predeploy": "npm run build",
-    "deploy": "gh-pages -b master -b build",
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d build"
   },
   "eslintConfig": {
     "extends": "react-app"
@@ -39,6 +40,5 @@
   },
   "devDependencies": {
     "tachyons": "^4.10.0"
-  },
-  "homepage": "https://uangbesok.github.io/facerecognitionbrain"
+  }
 }
