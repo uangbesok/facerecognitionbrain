@@ -25,8 +25,9 @@ class RegisterForm extends React.Component {
     this.setState({ registerPassword: event.target.value });
   };
 
-  onSubmitRegister = event => {
-    fetch("https://murmuring-cliffs-39707.herokuapp.com/register", 
+
+  registerUser = async () => {
+    let response  = await fetch("https://murmuring-cliffs-39707.herokuapp.com/register", 
     {
       method: 'post',
       headers: {'Content-Type' : 'application/json'},
@@ -37,15 +38,18 @@ class RegisterForm extends React.Component {
           password : this.state.registerPassword,
         }
       )
-    }).then(response => response.json())
-    .then(user => {
-      if(user.id)
+    });
+    let user = await response.json();
+    if(user.id)
       {
         this.props.loadUser(user);
         this.props.onRouteChange("home");
-      }
-    }); 
-    
+      } 
+}
+
+  onSubmitRegister = event => {
+    this.registerUser()
+      .catch(err => console.log(err));
   };
 
   render() {

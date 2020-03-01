@@ -18,26 +18,31 @@ class SignInForm extends React.Component {
     this.setState({ signInPassword: event.target.value });
   };
 
-  onSubmitSignIn = event => {
-    fetch("https://murmuring-cliffs-39707.herokuapp.com/signin", 
-    {
-      method: 'post',
-      headers: {'Content-Type' : 'application/json'},
-      body: JSON.stringify(
-        {
-          email : this.state.signInEmail,
-          password : this.state.signInPassword,
-        }
-      )
-    }).then(response => response.json())
-    .then(user => {
+  signInUser = async () => {
+      let response = await fetch("https://murmuring-cliffs-39707.herokuapp.com/signin", 
+      {
+        method: 'post',
+        headers: {'Content-Type' : 'application/json'},
+        body: JSON.stringify(
+          {
+            email : this.state.signInEmail,
+            password : this.state.signInPassword,
+          }
+        )
+      });
+
+      let user = await response.json();
       if(user.id)
       {
         this.props.loadUser(user);
         this.props.onRouteChange("home");
       }
-    }); 
-    
+      else console.log('No such user!')
+  }
+
+  onSubmitSignIn = event => {
+    this.signInUser()
+    .catch(err => console.log(err));
   };
 
   render() {

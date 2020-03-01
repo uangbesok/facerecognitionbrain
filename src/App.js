@@ -88,37 +88,69 @@ class App extends Component {
     this.setState({ box });
   };
 
+  predictImage = async () => {
+    try{
+        let response = await fetch("https://murmuring-cliffs-39707.herokuapp.com/predict", {
+          method: "post",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            input: this.state.imageURL
+          })
+        })
+        let prediction  = await response.json();
+        if(prediction)
+        {
+            response = await fetch("https://murmuring-cliffs-39707.herokuapp.com/image", {
+              method: "put",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                id: this.state.user.id
+              })
+            });
+            let count = await response.json();
+            let user = { ...this.state.user, entries: count };
+            this.setState({ user: user });
+            this.saveFaceBox(this.calculateFaceLocation(prediction));
+        }
+      }
+    catch(error)
+    {
+      console.log(error);
+    }
+  }
+
   onSubmit = () => {
     this.setState(
       (state, props) => ({ imageURL: state.input }),
       () => {
-          fetch("https://murmuring-cliffs-39707.herokuapp.com/predict", {
-            method: "post",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              input: this.state.imageURL
-            })
-          })
-          .then(response => response.json())
-          .then(response => {
-            if (response) {
-              fetch("https://murmuring-cliffs-39707.herokuapp.com/image", {
-                method: "put",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  id: this.state.user.id
-                })
-              })
-                .then(response => response.json())
-                .then(count => {
-                  const user = { ...this.state.user, entries: count };
-                  this.setState({ user: user });
-                })
-                .catch(console.log);
-              this.saveFaceBox(this.calculateFaceLocation(response));
-            }
-          })
-          .catch(err => console.log(err));
+          // fetch("https://murmuring-cliffs-39707.herokuapp.com/predict", {
+          //   method: "post",
+          //   headers: { "Content-Type": "application/json" },
+          //   body: JSON.stringify({
+          //     input: this.state.imageURL
+          //   })
+          // })
+          // .then(response => response.json())
+          // .then(response => {
+          //   if (response) {
+          //     fetch("https://murmuring-cliffs-39707.herokuapp.com/image", {
+          //       method: "put",
+          //       headers: { "Content-Type": "application/json" },
+          //       body: JSON.stringify({
+          //         id: this.state.user.id
+          //       })
+          //     })
+          //       .then(response => response.json())
+          //       .then(count => {
+          //         const user = { ...this.state.user, entries: count };
+          //         this.setState({ user: user });
+          //       })
+          //       .catch(console.log);
+          //     this.saveFaceBox(this.calculateFaceLocation(response));
+          //   }
+          // })
+          // .catch(err => console.log(err));
+          this.predictImage();
       }
     );
   };
